@@ -27,10 +27,11 @@ app.get('/download', async (req, res) => {
         const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
         const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
 
-        console.log(`Descargando audio: ${videoTitle}`);
+console.log(`Descargando audio: ${videoTitle}`);
 
-        // 2. Descarga simple de audio (sin imagen para evitar errores de formato)
+        // 2. Descarga con formato forzado para evitar el error "format not available"
         await exec(videoUrl, {
+            format: 'bestaudio/best', // <--- FORZAMOS A BUSCAR LO MEJOR DISPONIBLE
             extractAudio: true,
             audioFormat: 'mp3',
             output: outputPath,
