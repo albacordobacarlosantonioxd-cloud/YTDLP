@@ -20,10 +20,8 @@ const info = await exec(videoUrl, {
     dumpSingleJson: true,
     noCheckCertificates: true,
     noWarnings: true,
-    args: ['--cookies', './cookies.txt'], // <-- Pasado como argumento crudo
-    addHeader: [
-        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    ]
+    cookies: './cookies.txt', // La librería debería aceptar esto si no hay conflicto
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 });
 
         
@@ -40,10 +38,8 @@ await exec(videoUrl, {
     addMetadata: true,
     embedThumbnail: true,
     noCheckCertificates: true,
-    args: ['--cookies', './cookies.txt'], // <-- También aquí
-    addHeader: [
-        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    ]
+    cookies: './cookies.txt',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 });
 
         
