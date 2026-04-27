@@ -13,58 +13,48 @@ app.get('/download', async (req, res) => {
     if (!videoUrl) return res.status(400).send('URL requerida');
 
     try {
-        console.log(`Intentando conectar con YouTube: ${videoUrl}`);
+        console.log(`Conectando: ${videoUrl}`);
         
-        
-const info = await exec(videoUrl, {
-    dumpSingleJson: true,
-    noCheckCertificates: true,
-    noWarnings: true,
-    cookies: './cookies.txt', // La librería debería aceptar esto si no hay conflicto
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-});
+        // 1. Sacamos la info básica (título)
+        const info = await exec(videoUrl, {
+            dumpSingleJson: true,
+            noCheckCertificates: true,
+            noWarnings: true,
+            cookies: './cookies.txt',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        });
 
-        
         const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
         const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
 
-        console.log(`Descargando y procesando: ${videoTitle}`);
+        console.log(`Descargando audio: ${videoTitle}`);
 
-        
-await exec(videoUrl, {
-    extractAudio: true,
-    audioFormat: 'mp3',
-    output: outputPath,
-    addMetadata: true,
-    embedThumbnail: true,
-    noCheckCertificates: true,
-    cookies: './cookies.txt',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-});
+        // 2. Descarga simple de audio (sin imagen para evitar errores de formato)
+        await exec(videoUrl, {
+            extractAudio: true,
+            audioFormat: 'mp3',
+            output: outputPath,
+            noCheckCertificates: true,
+            cookies: './cookies.txt',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        });
 
-        
         if (fs.existsSync(outputPath)) {
             res.download(outputPath, `${videoTitle}.mp3`, (err) => {
-                if (err) console.error('Error al enviar el archivo:', err);
-                
-                
-                try {
-                    fs.unlinkSync(outputPath);
-                } catch (e) {
-                    console.log("Error al borrar temporal:", e);
-                }
+                if (err) console.error('Error al enviar:', err);
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
             });
         } else {
-            res.status(500).send('Error: El archivo no se generó.');
+            res.status(500).send('Error al generar el archivo.');
         }
 
     } catch (error) {
-        console.error('--- ERROR EN EL SERVIDOR ---');
-        console.error(error);
-        res.status(500).send('YouTube bloqueó la conexión o el video no está disponible.');
+        console.error('--- ERROR ---');
+        console.error(error.stderr || error);
+        res.status(500).send('YouTube bloqueó la descarga o el formato no está disponible.');
     }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor Pro corriendo en puerto ${PORT}`);
+    console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
