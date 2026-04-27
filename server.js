@@ -27,18 +27,19 @@ app.get('/download', async (req, res) => {
         const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
         const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
 
-console.log(`Iniciando conversión total para: ${videoTitle}`);
+console.log(`Iniciando descarga flexible para: ${videoTitle}`);
 
 await exec(videoUrl, {
-    // Bajamos el formato más básico que tenga video y audio (el código 18 suele ser mp4 360p)
-    // Esto es mucho más difícil de bloquear para YouTube
-    format: '18/best', 
+    // Quitamos la opción 'format' para que no sea exigente
     extractAudio: true,
     audioFormat: 'mp3',
     output: outputPath,
     noCheckCertificates: true,
+    noWarnings: true,
     cookies: './cookies.txt',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    // Esta opción ayuda a que FFmpeg use cualquier stream que encuentre
+    preferFreeFormats: true 
 });
 
         if (fs.existsSync(outputPath)) {
