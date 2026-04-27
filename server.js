@@ -27,18 +27,19 @@ app.get('/download', async (req, res) => {
         const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
         const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
 
-console.log(`Descargando audio: ${videoTitle}`);
+console.log(`Iniciando conversión total para: ${videoTitle}`);
 
-        // 2. Descarga con formato forzado para evitar el error "format not available"
-        await exec(videoUrl, {
-            format: 'bestaudio/best', // <--- FORZAMOS A BUSCAR LO MEJOR DISPONIBLE
-            extractAudio: true,
-            audioFormat: 'mp3',
-            output: outputPath,
-            noCheckCertificates: true,
-            cookies: './cookies.txt',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        });
+await exec(videoUrl, {
+    // Bajamos el formato más básico que tenga video y audio (el código 18 suele ser mp4 360p)
+    // Esto es mucho más difícil de bloquear para YouTube
+    format: '18/best', 
+    extractAudio: true,
+    audioFormat: 'mp3',
+    output: outputPath,
+    noCheckCertificates: true,
+    cookies: './cookies.txt',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+});
 
         if (fs.existsSync(outputPath)) {
             res.download(outputPath, `${videoTitle}.mp3`, (err) => {
