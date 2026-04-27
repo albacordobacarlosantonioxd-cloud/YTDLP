@@ -1,57 +1,59 @@
 const express = require('express');
 const path = require('path');
 const { exec } = require('yt-dlp-exec');
+const fs = require('fs');
 const app = express();
 
-// CLAVE PARA RAILWAY: Usar el puerto dinámico
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
 
-// Ruta principal para cargar tu index.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// RUTA DE DESCARGA
 app.get('/download', async (req, res) => {
     const videoUrl = req.query.url;
-
-    if (!videoUrl) {
-        return res.status(400).send('Falta la URL de YouTube');
-    }
+    if (!videoUrl) return res.status(400).send('URL requerida');
 
     try {
-        // Configuración de descarga para MP3 con Carátula
-        const options = {
+        console.log(`Obteniendo info de: ${videoUrl}`);
+        
+        // 1. Obtenemos el título del video primero
+        const info = await exec(videoUrl, {
+            dumpSingleJson: true,
+            noCheckCertificates: true,
+        });
+
+        const videoTitle = info.title.replace(/[^\w\s]/gi, ''); // Limpiamos el título de caracteres raros
+        const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
+
+        console.log(`Descargando: ${videoTitle}`);
+
+        // 2. Ejecutamos la descarga con carátula y metadatos
+        await exec(videoUrl, {
             extractAudio: true,
             audioFormat: 'mp3',
+            output: outputPath,
             addMetadata: true,
-            embedThumbnail: true,
-            output: '-', // Esto envía el archivo directamente al navegador
-        };
-
-        res.setHeader('Content-Disposition', 'attachment; filename="audio.mp3"');
-        res.setHeader('Content-Type', 'audio/mpeg');
-
-        // Ejecutar yt-dlp y enviar el flujo al cliente
-        const stream = exec(videoUrl, options, { stdio: ['ignore', 'pipe', 'ignore'] });
-        
-        stream.stdout.pipe(res);
-
-        stream.on('error', (err) => {
-            console.error('Error en la descarga:', err);
-            if (!res.headersSent) res.status(500).send('Error al procesar el audio');
+            embedThumbnail: true, // Esto pega la imagen al MP3
+            noCheckCertificates: true,
+            preferFreeFormats: true,
         });
+
+        // 3. Enviamos el archivo con su nombre real
+        if (fs.existsSync(outputPath)) {
+            res.download(outputPath, `${videoTitle}.mp3`, (err) => {
+                if (err) console.error('Error al enviar:', err);
+                // Borramos el temporal para no llenar el disco de Railway
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+            });
+        } else {
+            res.status(500).send('No se pudo generar el archivo.');
+        }
 
     } catch (error) {
         console.error('Error fatal:', error);
-        res.status(500).send('Error interno del servidor');
+        res.status(500).send('Error en el servidor. Revisa los logs.');
     }
 });
 
-// Encender el motor
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor activo y escuchando en el puerto ${PORT}`);
+    console.log(`🚀 Servidor Pro en puerto ${PORT}`);
 });
