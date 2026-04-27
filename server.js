@@ -1,8 +1,7 @@
 const express = require('express');
-const path = require('path');
-const { exec } = require('yt-dlp-exec');
-const fs = require('fs');
+const axios = require('axios'); // Necesitamos instalar axios
 const app = express();
+const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
@@ -13,51 +12,32 @@ app.get('/download', async (req, res) => {
     if (!videoUrl) return res.status(400).send('URL requerida');
 
     try {
-        console.log(`Conectando: ${videoUrl}`);
+        console.log(`Solicitando descarga para: ${videoUrl}`);
+
+        // 1. Llamamos a la API de Sylphy
+        const apiUrl = `https://sylphyy.xyz/download/v2/ytmp3?url=${encodeURIComponent(videoUrl)}&api_key=sylphy-ty5xtWm`;
         
-        // 1. Sacamos la info básica (título)
-        const info = await exec(videoUrl, {
-            dumpSingleJson: true,
-            noCheckCertificates: true,
-            noWarnings: true,
-            cookies: './cookies.txt',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        });
+        const response = await axios.get(apiUrl);
 
-        const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
-        const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
+        if (response.data && response.data.status) {
+            const downloadUrl = response.data.result.download_url;
+            const title = response.data.result.title || 'audio';
 
-console.log(`Iniciando descarga flexible para: ${videoTitle}`);
+            console.log(`¡Éxito! Redirigiendo a: ${title}`);
 
-await exec(videoUrl, {
-    // Quitamos la opción 'format' para que no sea exigente
-    extractAudio: true,
-    audioFormat: 'mp3',
-    output: outputPath,
-    noCheckCertificates: true,
-    noWarnings: true,
-    cookies: './cookies.txt',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    // Esta opción ayuda a que FFmpeg use cualquier stream que encuentre
-    preferFreeFormats: true 
-});
-
-        if (fs.existsSync(outputPath)) {
-            res.download(outputPath, `${videoTitle}.mp3`, (err) => {
-                if (err) console.error('Error al enviar:', err);
-                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-            });
+            // 2. Redirigimos al usuario directamente al link de descarga de la API
+            // Esto ahorra memoria en tu servidor de Railway
+            res.redirect(downloadUrl);
         } else {
-            res.status(500).send('Error al generar el archivo.');
+            res.status(500).send('La API externa no pudo procesar el video.');
         }
 
     } catch (error) {
-        console.error('--- ERROR ---');
-        console.error(error.stderr || error);
-        res.status(500).send('YouTube bloqueó la descarga o el formato no está disponible.');
+        console.error('Error con la API:', error.message);
+        res.status(500).send('Error al conectar con el servicio de descarga.');
     }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor listo en puerto ${PORT}`);
+    console.log(`🚀 Servidor con API externa en puerto ${PORT}`);
 });
