@@ -16,14 +16,15 @@ app.get('/download', async (req, res) => {
         console.log(`Intentando conectar con YouTube: ${videoUrl}`);
         
         
-        const info = await exec(videoUrl, {
-            dumpSingleJson: true,
-            noCheckCertificates: true,
-            noWarnings: true,
-            addHeader: [
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            ]
-        });
+const info = await exec(videoUrl, {
+    dumpSingleJson: true,
+    noCheckCertificates: true,
+    noWarnings: true,
+    cookie: './cookies.txt', // <--- El pase VIP
+    addHeader: [
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]
+});
 
         
         const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
@@ -32,17 +33,18 @@ app.get('/download', async (req, res) => {
         console.log(`Descargando y procesando: ${videoTitle}`);
 
         
-        await exec(videoUrl, {
-            extractAudio: true,
-            audioFormat: 'mp3',
-            output: outputPath,
-            addMetadata: true,
-            embedThumbnail: true,
-            noCheckCertificates: true,
-            addHeader: [
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            ]
-        });
+await exec(videoUrl, {
+    extractAudio: true,
+    audioFormat: 'mp3',
+    output: outputPath,
+    addMetadata: true,
+    embedThumbnail: true,
+    noCheckCertificates: true,
+    cookie: './cookies.txt', // <--- También aquí
+    addHeader: [
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]
+});
 
         
         if (fs.existsSync(outputPath)) {
