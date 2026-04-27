@@ -13,47 +13,60 @@ app.get('/download', async (req, res) => {
     if (!videoUrl) return res.status(400).send('URL requerida');
 
     try {
-        console.log(`Obteniendo info de: ${videoUrl}`);
+        console.log(`Intentando conectar con YouTube: ${videoUrl}`);
         
-        // 1. Obtenemos el título del video primero
+        
         const info = await exec(videoUrl, {
             dumpSingleJson: true,
             noCheckCertificates: true,
+            noWarnings: true,
+            addHeader: [
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ]
         });
 
-        const videoTitle = info.title.replace(/[^\w\s]/gi, ''); // Limpiamos el título de caracteres raros
+        
+        const videoTitle = info.title.replace(/[/\\?%*:|"<>\.]/g, ''); 
         const outputPath = path.join('/tmp', `${videoTitle}-${Date.now()}.mp3`);
 
-        console.log(`Descargando: ${videoTitle}`);
+        console.log(`Descargando y procesando: ${videoTitle}`);
 
-        // 2. Ejecutamos la descarga con carátula y metadatos
+        
         await exec(videoUrl, {
             extractAudio: true,
             audioFormat: 'mp3',
             output: outputPath,
             addMetadata: true,
-            embedThumbnail: true, // Esto pega la imagen al MP3
+            embedThumbnail: true,
             noCheckCertificates: true,
-            preferFreeFormats: true,
+            addHeader: [
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ]
         });
 
-        // 3. Enviamos el archivo con su nombre real
+        
         if (fs.existsSync(outputPath)) {
             res.download(outputPath, `${videoTitle}.mp3`, (err) => {
-                if (err) console.error('Error al enviar:', err);
-                // Borramos el temporal para no llenar el disco de Railway
-                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+                if (err) console.error('Error al enviar el archivo:', err);
+                
+                
+                try {
+                    fs.unlinkSync(outputPath);
+                } catch (e) {
+                    console.log("Error al borrar temporal:", e);
+                }
             });
         } else {
-            res.status(500).send('No se pudo generar el archivo.');
+            res.status(500).send('Error: El archivo no se generó.');
         }
 
     } catch (error) {
-        console.error('Error fatal:', error);
-        res.status(500).send('Error en el servidor. Revisa los logs.');
+        console.error('--- ERROR EN EL SERVIDOR ---');
+        console.error(error);
+        res.status(500).send('YouTube bloqueó la conexión o el video no está disponible.');
     }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor Pro en puerto ${PORT}`);
+    console.log(`🚀 Servidor Pro corriendo en puerto ${PORT}`);
 });
