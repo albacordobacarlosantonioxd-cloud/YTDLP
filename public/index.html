@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Downloader Pro</title>
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --dark: #121212;
+            --card: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid #333;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 1.5rem; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #252525;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        .status { margin-top: 1rem; font-size: 0.9rem; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>YT To MP3</h1>
+        <p>Pega el link de YouTube abajo</p>
+        
+        <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=...">
+        <button onclick="downloadAudio()">Descargar MP3</button>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        function downloadAudio() {
+            const url = document.getElementById('url').value;
+            const status = document.getElementById('status');
+
+            if (!url) {
+                status.innerText = "⚠️ Por favor, pega un link.";
+                return;
+            }
+
+            status.innerText = "⏳ Procesando descarga... espera un momento.";
+            
+            // Redirige a la ruta de descarga que creamos en server.js
+            window.location.href = `/download?url=${encodeURIComponent(url)}`;
+        }
+    </script>
+</body>
+</html>
