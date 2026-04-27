@@ -6,7 +6,7 @@
     <title>YT Downloader Pro</title>
     <style>
         :root {
-            --primary: #00d2ff;
+            --primary: hwb(0 0% 0%);
             --dark: #121212;
             --card: #1e1e1e;
         }
@@ -78,21 +78,27 @@
         <div class="status" id="status"></div>
     </div>
 
-    <script>
-        function downloadAudio() {
-            const url = document.getElementById('url').value;
-            const status = document.getElementById('status');
+<script>
+    function downloadAudio() {
+        const input = document.getElementById('url');
+        const status = document.getElementById('status');
+        const videoUrl = input.value.trim(); // .trim() quita espacios accidentales
 
-            if (!url) {
-                status.innerText = "⚠️ Por favor, pega un link.";
-                return;
-            }
-
-            status.innerText = "⏳ Procesando descarga... espera un momento.";
-            
-            // Redirige a la ruta de descarga que creamos en server.js
-            window.location.href = `/download?url=${encodeURIComponent(url)}`;
+        if (!videoUrl || videoUrl === "") {
+            status.style.color = "#ff4d4d";
+            status.innerText = "⚠️ Por favor, pega un link válido.";
+            return;
         }
-    </script>
+
+        status.style.color = "#888";
+        status.innerText = "⏳ Conectando con el servidor... la descarga iniciará pronto.";
+        
+        // Usamos una constante para asegurar que no vaya vacía
+        const finalUrl = `/download?url=${encodeURIComponent(videoUrl)}`;
+        
+        console.log("Redirigiendo a:", finalUrl);
+        window.location.href = finalUrl;
+    }
+</script>
 </body>
 </html>
